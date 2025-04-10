@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Asistente de Jellyfin</title>
+  <style>
+    :root {
+      --primary-color: #00a4dc;
+      --secondary-color: #f5f5f5;
+      --accent-color: #ff6b6b;
+      --text-color: #333;
+      --light-text: #777;
+      --border-radius: 12px;
+      --box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fafafa;
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      color: var(--primary-color);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    .subtitle {
+      color: var(--light-text);
+      font-size: 0.95rem;
+    }
+    
+    .input-container {
+      position: relative;
+      margin-bottom: 15px;
+    }
+    
+    textarea {
+      width: 100%;
+      padding: 16px;
+      font-size: 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: var(--border-radius);
+      resize: none;
+      transition: border 0.3s ease;
+      min-height: 120px;
+      box-sizing: border-box;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(0, 164, 220, 0.2);
+    }
+    
+    .button-container {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    #sendButton {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    #sendButton:hover {
+      background-color: #0088b9;
+      transform: translateY(-1px);
+    }
+    
+    #clearButton {
+      background-color: transparent;
+      color: var(--light-text);
+      border: 1px solid #e0e0e0;
+    }
+    
+    #clearButton:hover {
+      background-color: var(--secondary-color);
+    }
+    
+    .response-box {
+      background-color: white;
+      padding: 24px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      margin-top: 20px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .response-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .response-title {
+      color: var(--primary-color);
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .timestamp {
+      color: var(--light-text);
+      font-size: 0.85rem;
+    }
+    
+    #responseMessage {
+      margin-bottom: 20px;
+      white-space: pre-line;
+    }
+    
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    
+    .suggestions li {
+      background-color: var(--secondary-color);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .suggestions li:hover {
+      background-color: #e0e0e0;
+      transform: scale(1.02);
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top: 4px solid var(--primary-color);
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .movie-card {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border-left: 3px solid var(--primary-color);
+    }
+    
+    .movie-title {
+      font-weight: 600;
+      margin: 0 0 5px 0;
+      color: var(--primary-color);
+    }
+    
+    .movie-year {
+      color: var(--light-text);
+      font-size: 0.85rem;
+    }
+    
+    .movie-highlight {
+      margin: 8px 0 0 0;
+      font-size: 0.95rem;
+    }
+    
+    .collection-tag {
+      display: inline-block;
+      background-color: var(--secondary-color);
+      padding: 6px 12px;
+      border-radius: 20px;
+      margin: 5px;
+      font-size: 0.9rem;
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: var(--light-text);
+      font-size: 0.85rem;
+    }
+    
+    @media (max-width: 600px) {
+      body {
+        padding: 15px;
+      }
+      
+      textarea {
+        padding: 12px;
+      }
+      
+      button {
+        padding: 10px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Asistente de Jellyfin</h1>
+    <p class="subtitle">Consulta información sobre películas, series y colecciones</p>
+  </header>
+
+  <div class="input-container">
+    <textarea 
+      id="data" 
+      rows="4" 
+      placeholder="Ejemplos: 
+- ¿Qué colecciones hay disponibles?
+- Películas de ciencia ficción
+- Recomiéndame algo de terror
+- Director: Christopher Nolan"
+    ></textarea>
+  </div>
+
+  <div class="button-container">
+    <button id="clearButton">Limpiar</button>
+    <button id="sendButton">Enviar consulta</button>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Procesando tu consulta...</p>
+  </div>
+
+  <div class="response-box" id="responseBox">
+    <div class="response-header">
+      <h2 class="response-title">Respuesta</h2>
+      <span class="timestamp" id="timestamp"></span>
+    </div>
+    <div id="responseContent">
+      <p id="responseMessage"></p>
+      <div id="moviesContainer"></div>
+      <div id="collectionsContainer"></div>
+    </div>
+    <h3 style="margin: 20px 0 10px 0; font-size: 1rem;">Sugerencias:</h3>
+    <ul class="suggestions" id="suggestionsList"></ul>
+  </div>
+
+  <footer>
+    <p>Sistema integrado con Jellyfin • © 2025</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const dataInput = document.getElementById('data');
+      const sendButton = document.getElementById('sendButton');
+      const clearButton = document.getElementById('clearButton');
+      const responseBox = document.getElementById('responseBox');
+      const messageEl = document.getElementById('responseMessage');
+      const moviesContainer = document.getElementById('moviesContainer');
+      const collectionsContainer = document.getElementById('collectionsContainer');
+      const suggestionsEl = document.getElementById('suggestionsList');
+      const timestampEl = document.getElementById('timestamp');
+      const loadingEl = document.getElementById('loading');
+
+      // Autoajustar altura del textarea
+      dataInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+      });
+
+      // Limpiar contenido
+      clearButton.addEventListener('click', () => {
+        dataInput.value = '';
+        dataInput.style.height = 'auto';
+        responseBox.style.display = 'none';
+      });
+
+      // Enviar consulta
+      sendButton.addEventListener('click', async () => {
+        const query = dataInput.value.trim();
+        
+        if (!query) {
+          alert('Por favor ingresa una consulta');
+          return;
+        }
+
+        try {
+          // Mostrar carga
+          loadingEl.style.display = 'block';
+          responseBox.style.display = 'none';
+          
+          const response = await fetch("https://escritoriocasa.mywire.org/webhook-test/21152061-479b-493e-8c76-c6249e287e61", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ message: query })
+          });
+
+          if (!response.ok) throw new Error('Error en la respuesta del servidor');
+          
+          let result = await response.json();
+          console.log("Respuesta completa:", result); // Para depuración
+
+          // Normalización de la respuesta
+          if (Array.isArray(result)) {
+            result = result[0]; // Tomamos el primer elemento si es array
+          }
+
+          // Algunos webhooks usan 'response' como wrapper y otros no
+          const responseData = result.response || result;
+
+          // Mostrar resultados
+          if (responseData) {
+            // Mensaje principal
+            messageEl.textContent = responseData.message || "Respuesta recibida";
+            
+            // Limpiar contenedores
+            moviesContainer.innerHTML = '';
+            collectionsContainer.innerHTML = '';
+            suggestionsEl.innerHTML = '';
+
+            // Mostrar películas si existen
+            if (Array.isArray(responseData.movies)) {
+              responseData.movies.forEach(movie => {
+                const movieCard = document.createElement('div');
+                movieCard.className = 'movie-card';
+                movieCard.innerHTML = `
+                  <h4 class="movie-title">${movie.title} <span class="movie-year">(${movie.year})</span></h4>
+                  ${movie.highlight ? `<p class="movie-highlight">${movie.highlight}</p>` : ''}
+                `;
+                moviesContainer.appendChild(movieCard);
+              });
+            }
+
+            // Mostrar colecciones si existen
+            if (Array.isArray(responseData.data?.collections)) {
+              responseData.data.collections.forEach(collection => {
+                const tag = document.createElement('span');
+                tag.className = 'collection-tag';
+                tag.textContent = collection;
+                collectionsContainer.appendChild(tag);
+              });
+            } else if (Array.isArray(responseData.collections)) {
+              responseData.collections.forEach(collection => {
+                const tag = document.createElement('span');
+                tag.className = 'collection-tag';
+                tag.textContent = collection;
+                collectionsContainer.appendChild(tag);
+              });
+            }
+
+            // Mostrar sugerencias
+            if (Array.isArray(responseData.suggestions) && responseData.suggestions.length > 0) {
+              responseData.suggestions.forEach(s => {
+                const li = document.createElement("li");
+                li.textContent = s;
+                li.addEventListener('click', () => {
+                  dataInput.value = s.replace(/^Busca: /, '').replace(/^Pregunta por: /, '');
+                  dataInput.focus();
+                });
+                suggestionsEl.appendChild(li);
+              });
+            } else {
+              suggestionsEl.innerHTML = '<li>No hay sugerencias disponibles</li>';
+            }
+
+            // Manejo del timestamp
+            if (responseData.timestamp) {
+              try {
+                timestampEl.textContent = new Date(responseData.timestamp).toLocaleString('es-ES');
+              } catch (e) {
+                console.error("Error formateando fecha:", e);
+                timestampEl.textContent = 'Ahora mismo';
+              }
+            } else {
+              timestampEl.textContent = 'Ahora mismo';
+            }
+            
+            responseBox.style.display = "block";
+          } else {
+            messageEl.textContent = "No se recibieron datos válidos en la respuesta.";
+            responseBox.style.display = "block";
+          }
+        } catch (error) {
+          messageEl.textContent = "Error al contactar al servidor. Por favor intenta nuevamente.";
+          console.error("Error:", error);
+          responseBox.style.display = "block";
+        } finally {
+          loadingEl.style.display = 'none';
+        }
+      });
+
+      // Permitir enviar con Shift+Enter
+      dataInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendButton.click();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
